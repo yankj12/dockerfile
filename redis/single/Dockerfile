@@ -20,14 +20,25 @@ ENV HTTP_PROXY=$MY_PROXY_URL \
 
 #############
 # 构造redis
+# 自 redis 6.0.0 之后，编译 redis 需要支持 C11 特性，C11 特性在 4.9 中被引入。Centos7 默认 gcc 版本为 4.8.5，所以需要升级gcc版本。
 #############
+# https://download.redis.io/releases/redis-5.0.10.tar.gz
+# http://download.redis.io/releases/redis-6.0.9.tar.gz
+
 RUN yum install -y gcc gcc-c++ make openssl openssl-devel wget
-RUN cd /home \
-	&& wget -O redis.tar.gz "http://download.redis.io/releases/redis-6.0.9.tar.gz" \
+#	&& yum -y install centos-release-scl \
+#	&& yum -y install devtoolset-9-gcc devtoolset-9-gcc-c++ devtoolset-9-binutils
+#RUN scl enable devtoolset-9 bash \
+#	&& echo "source /opt/rh/devtoolset-9/enable" >>/etc/profile
+#	# 安装redis6需要上面三行命令以及scl
+
+RUN	cd /home \
+	&& wget -O redis.tar.gz "https://download.redis.io/releases/redis-5.0.10.tar.gz" \
 	&& tar -xvf redis.tar.gz \
+	&& cd /home/redis-5.0.10 \
 	&& make && make PREFIX=/usr/local/redis install \
 	&& mkdir -p /usr/local/redis/conf/ \
-	&& cp /home/redis-4.0.9/redis.conf  /usr/local/redis/conf/ \
+	&& cp /home/redis-5.0.10/redis.conf  /usr/local/redis/conf/ \
 	&& sed -i  '68s/127.0.0.1/0.0.0.0/' /usr/local/redis/conf/redis.conf \
 	&& sed -i  '87s/protected-mode yes/protected-mode no/' /usr/local/redis/conf/redis.conf	
 ENTRYPOINT /usr/local/redis/bin/redis-server /usr/local/redis/conf/redis.conf
